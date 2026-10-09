@@ -33,7 +33,7 @@
       modules = [
         ({ ... }: {
           nixpkgs.crossSystem.config = cross;
-	  nixpkgs.overlays = [ overlay ];
+          nixpkgs.overlays = [ overlay ];
         })
         ./bootstrap.nix
       ];
