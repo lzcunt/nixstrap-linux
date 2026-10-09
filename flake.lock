@@ -23,14 +23,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1791539535,
-        "narHash": "sha256-Q2CdBExFJruOPKQT73YHH/nUgUhHk2g8wGDKwxf2ies=",
-        "path": "/home/lzcunt/src/os/nixstrap",
-        "type": "path"
+        "lastModified": 1791539511,
+        "narHash": "sha256-ggU5qaPl1aA+T3Sk0B+Btg45rZ6ldNKOFoKf3W7+RI4=",
+        "owner": "lzcunt",
+        "repo": "nixstrap",
+        "rev": "b9ed8f82a4d25b3b9921d03687f407a8d53c29c0",
+        "type": "github"
       },
       "original": {
-        "path": "/home/lzcunt/src/os/nixstrap",
-        "type": "path"
+        "owner": "lzcunt",
+        "repo": "nixstrap",
+        "type": "github"
       }
     },
     "root": {

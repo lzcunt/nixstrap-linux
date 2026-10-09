@@ -1,8 +1,11 @@
+# Adapted from NixOS.
 { config, lib, pkgs, ... }:
 
 with lib;
 
 let
+  inherit (config.boot.kernelPackages) kernel;
+
   modulesTypeDesc = ''
     This can either be a list of modules, or an attrset. In an
     attrset, names that are set to `true` represent modules that will
@@ -19,6 +22,72 @@ let
 in
 {
   options = {
+    boot.kernel.enable =
+      mkEnableOption "the Linux kernel. This is useful for systemd-like containers which do not require a kernel"
+      // {
+        default = true;
+      };
+
+    boot.kernelPackages = mkOption {
+      default = pkgs.linuxPackages;
+      type = types.raw;
+      apply =
+        kernelPackages:
+        kernelPackages.extend (
+          self: super: {
+            # kernel = super.kernel.override (originalArgs: {
+            #   inherit randstructSeed;
+            #   kernelPatches = (originalArgs.kernelPatches or [ ]) ++ kernelPatches;
+            #   features = lib.recursiveUpdate super.kernel.features features;
+            # });
+          }
+        );
+      # We don't want to evaluate all of linuxPackages for the manual
+      # - some of it might not even evaluate correctly.
+      defaultText = literalExpression "pkgs.linuxPackages";
+      example = literalExpression "pkgs.linuxKernel.packages.linux_6_18";
+      description = ''
+        This option allows you to override the Linux kernel used by
+        Nixstrap.  Since things like external kernel module packages are
+        tied to the kernel you're using, it also overrides those.
+        This option is a function that takes Nixpkgs as an argument
+        (as a convenience), and returns an attribute set containing at
+        the very least an attribute {var}`kernel`.
+        Additional attributes may be needed depending on your
+        configuration.  For instance, if you use the NVIDIA X driver,
+        then it also needs to contain an attribute
+        {var}`nvidia_x11`.
+      '';
+    };
+
+    boot.kernelParams = mkOption {
+      type = types.listOf (
+        types.strMatching ''([^"[:space:]]|"[^"]*")+''
+        // {
+          name = "kernelParam";
+          description = "string, with spaces inside double quotes";
+        }
+      );
+      default = [ ];
+      description = "Parameters added to the kernel command line.";
+    };
+
+    boot.consoleLogLevel = mkOption {
+      type = types.int;
+      default = 4;
+      description = ''
+        The kernel console `loglevel`. All Kernel Messages with a log level smaller
+        than this setting will be printed to the console.
+      '';
+    };
+
+    boot.extraModulePackages = mkOption {
+      type = types.listOf types.package;
+      default = [ ];
+      example = literalExpression "[ config.boot.kernelPackages.nvidia_x11 ]";
+      description = "A list of additional packages supplying kernel modules.";
+    };
+
     boot.kernelModules = mkOption {
       type = attrNamesToTrue;
       default = { };
@@ -93,10 +162,10 @@ in
       '';
       # Convert the list of path to only one path.
       apply =
-        # let
-        #   kernel-name = config.boot.kernelPackages.kernel.name or "kernel";
-        # in
-        modules: (pkgs.aggregateModules modules).override { name = "kernel-modules"; };
+        let
+          kernel-name = kernel.name or "kernel";
+        in
+        modules: (pkgs.aggregateModules modules).override { name = "${kernel-name}-modules"; };
     };
   };
 
@@ -143,8 +212,7 @@ in
           "hid_cherry"
           "hid_corsair"
         ]
-        # ++ optionals (versionAtLeast kernel.version "7.2") [
-	++ [
+        ++ optionals (versionAtLeast kernel.version "7.2") [
           # xhci-pci defers AMD 800-series chipset controllers to this driver.
           "xhci_pci_prom21"
         ]
@@ -159,6 +227,18 @@ in
       boot.initrd.kernelModules = optionals config.boot.initrd.includeDefaultModules [
         # For LVM.
         "dm_mod"
+      ];
+    })
+    (mkIf config.boot.kernel.enable {
+      system.build = { inherit kernel; };
+
+      system.modulesTree = [ (lib.getOutput "modules" kernel) ] ++ config.boot.extraModulePackages;
+
+      # TODO: consoleLogLevel
+
+      boot.kernelModules = [
+        "loop"
+        "atkbd"
       ];
     })
   ];

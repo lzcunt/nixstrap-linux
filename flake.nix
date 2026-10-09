@@ -5,7 +5,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     # nixpkgs.url = "github:lzcunt/nixpkgs/mlibc/init";
     nixstrap = {
-      url = "path:/home/lzcunt/src/os/nixstrap";
+      url = "github:lzcunt/nixstrap";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
