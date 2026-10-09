@@ -37,9 +37,11 @@ in
       closurePaths = [
         modulesClosure
         stage-1-init
+        pkgs.udev-rules
       ];
       compression = cfg.compression;
       file."/init".symlink = toString stage-1-init;
+      file."/etc/udev/rules.d".symlink = toString pkgs.udev-rules;
       file."/lib".symlink = "${modulesClosure}/lib";
     };
   };

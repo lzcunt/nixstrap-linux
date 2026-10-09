@@ -4,16 +4,19 @@
   buildPackages,
   bash,
   coreutils,
+  eudev,
   kmod,
   util-linux,
 
   kernelModules ? [ ],
+  verbose ? true,
 }:
 
 let
   inputs = [
     bash
     coreutils
+    eudev
     kmod
     util-linux
   ];
@@ -31,7 +34,7 @@ replaceVarsWith {
   '';
 
   replacements = {
-    inherit kernelModules;
+    inherit kernelModules verbose;
     shell = lib.getExe bash;
     binPath = lib.makeBinPath inputs;
   };
