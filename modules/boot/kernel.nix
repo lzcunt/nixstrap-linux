@@ -227,6 +227,12 @@ in
       boot.initrd.kernelModules = optionals config.boot.initrd.includeDefaultModules [
         # For LVM.
         "dm_mod"
+        # For the root filesystem: a squashfs loop-mounted off the ISO,
+        # overlaid with a writable tmpfs layer.
+        "loop"
+        "iso9660"
+        "squashfs"
+        "overlay"
       ];
     })
     (mkIf config.boot.kernel.enable {

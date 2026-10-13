@@ -33,6 +33,9 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # Exposed so that stage 2 roots can also modprobe (hotplug).
+    system.build.initrdModulesClosure = modulesClosure;
+
     cpioArchive."initrd" = {
       closurePaths = [
         modulesClosure
@@ -43,6 +46,7 @@ in
       file."/init".symlink = toString stage-1-init;
       file."/etc/udev/rules.d".symlink = toString pkgs.udev-rules;
       file."/lib".symlink = "${modulesClosure}/lib";
+      file."/sbin/modprobe".symlink = lib.getExe' pkgs.kmod "modprobe";
     };
   };
 }
