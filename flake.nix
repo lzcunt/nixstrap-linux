@@ -10,21 +10,12 @@
     };
   };
 
-  outputs = { nixpkgs, nixstrap, ... }: let
+  outputs = { nixpkgs, nixstrap, self, ... }: let
     supportedSystems = [
       "x86_64-linux"
       "aarch64-linux"
     ];
-    forEachSupportedSystem =
-      f:
-      nixpkgs.lib.genAttrs supportedSystems (
-        system:
-        f {
-          hostPkgs = import nixpkgs {
-            inherit system;
-          };
-        }
-      );
+    forEachSupportedSystem = f: nixpkgs.lib.genAttrs supportedSystems f;
 
     overlay = import ./overlay.nix;
 
@@ -42,12 +33,19 @@
     overlays.default = overlay;
 
     nixstrapConfigurations = forEachSupportedSystem (
-      { hostPkgs }:
+      system:
+      let
+        hostPkgs = import nixpkgs {
+          inherit system;
+        };
+      in
       {
         x86_64-gnu = mkConfiguration hostPkgs "x86_64-unknown-linux-gnu";
         x86_64-mlibc = mkConfiguration hostPkgs "x86_64-unknown-linux-mlibc";
         x86_64-musl = mkConfiguration hostPkgs "x86_64-unknown-linux-musl";
       }
     );
+
+    optionsDoc = forEachSupportedSystem (system: (import nixpkgs { inherit system; }).nixosOptionsDoc { inherit (self.nixstrapConfigurations.${system}.x86_64-gnu) options; });
   };
 }
